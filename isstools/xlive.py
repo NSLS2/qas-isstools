@@ -201,17 +201,17 @@ class XliveGui(*uic.loadUiType(ui_path)):
         self.run_mode = 'run'
 
         # Looking for analog pizzaboxes:
-        regex = re.compile('pba\d{1}.*')
+        regex = re.compile(r'pba\d{1}.*')
         matches = [det for det in self.det_dict if re.match(regex, det)]
         self.adc_list = [self.det_dict[x]['obj'] for x in self.det_dict if x in matches]
 
         # Looking for encoder pizzaboxes:
-        regex = re.compile('pb\d{1}_enc.*')
+        regex = re.compile(r'pb\d{1}_enc.*')
         matches = [det for det in self.det_dict if re.match(regex, det)]
         self.enc_list = [self.det_dict[x]['obj'] for x in self.det_dict if x in matches]
 
         # Looking for xias:
-        regex = re.compile('xia\d{1}')
+        regex = re.compile(r'xia\d{1}')
         matches = [det for det in self.det_dict if re.match(regex, det)]
         self.xia = None
         # self.xia_list = [self.det_dict[x]['obj'] for x in self.det_dict if x in matches]
