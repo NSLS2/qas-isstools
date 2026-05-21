@@ -318,13 +318,14 @@
      <property name="geometry">
       <rect>
        <x>240</x>
-       <y>100</y>
+       <y>90</y>
        <width>81</width>
-       <height>21</height>
+       <height>51</height>
       </rect>
      </property>
      <property name="text">
-      <string>*</string>
+      <string>Update 
+Position</string>
      </property>
     </widget>
     <widget class="QPushButton" name="push_create_sample">
@@ -658,8 +659,8 @@
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>314</width>
-       <height>126</height>
+       <width>321</width>
+       <height>145</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
@@ -736,14 +737,8 @@
       </item>
       <item row="0" column="2">
        <widget class="QPushButton" name="push_update_traj_list">
-        <property name="maximumSize">
-         <size>
-          <width>22</width>
-          <height>22</height>
-         </size>
-        </property>
         <property name="text">
-         <string>...</string>
+         <string>update trajectory</string>
         </property>
        </widget>
       </item>
