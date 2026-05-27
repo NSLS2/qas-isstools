@@ -659,7 +659,7 @@ Position</string>
       <rect>
        <x>10</x>
        <y>30</y>
-       <width>321</width>
+       <width>397</width>
        <height>145</height>
       </rect>
      </property>
@@ -1408,7 +1408,7 @@ Position</string>
         <double>31000.000000000000000</double>
        </property>
        <property name="value">
-        <double>9000.000000000000000</double>
+        <double>20000.000000000000000</double>
        </property>
       </widget>
      </item>
