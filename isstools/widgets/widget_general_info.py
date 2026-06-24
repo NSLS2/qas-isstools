@@ -165,8 +165,10 @@ class UIGeneralInfo(*uic.loadUiType(ui_path)):
         self.label_saf.setText(f"{self.RE.md['SAF']}") # SAF
 
         self.cycle = ['', 'Spring', 'Summer', 'Fall']
+        cycleNr = self.RE.md.get('cycle', '').split('-')[-1]
         self.label_current_cycle.setText(
-            'NSLS-II Cycle: {} {}'.format(self.RE.md['year'], self.cycle[int(self.RE.md['cycle'])]))
+            # 'NSLS-II Cycle: {} {}'.format(self.RE.md['year'], self.cycle[self.RE.md['cycle']]))
+            'NSLS-II Cycle: {}-{}'.format(self.RE.md['year'], cycleNr))
 
     def set_user_info(self):
         dlg = UpdateUserDialog.UpdateUserDialog(self.RE.md['year'], self.RE.md['cycle'], self.RE.md['PROPOSAL'],
