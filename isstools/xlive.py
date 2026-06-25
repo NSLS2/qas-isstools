@@ -1,7 +1,6 @@
 import re
 import sys
 
-from time import sleep, ctime
 import numpy as np
 import pkg_resources
 import math
@@ -29,7 +28,8 @@ from isstools.widgets import (
 from isstools.elements import EmittingStream
 from isstools.elements.batch_motion import SamplePositioner
 from isstools.process_callbacks.callback import ProcessingCallback
-from xas.process import display_interpolate_bin_with_tiled
+from xas.process import process_interpolate_locally
+import time
 
 ui_path = pkg_resources.resource_filename("isstools", "ui/XLive.ui")
 
@@ -439,22 +439,20 @@ class ProcessingThread(QThread):
             try:
                 attempt += 1
                 uid = self.doc["run_start"]
-                print(
-                    f" File received {uid} : Wait + retrieve processed data from tiled"
+                print(f" File received {uid} : Process data to diplay locally")
+                process_interpolate_locally(
+                    self.gui.tiled_client[f"qas/migration/{uid}"],
+                    draw_func_interp=self.gui.widget_run.draw_interpolated_data,
                 )
-                sleep(3)
-                tiled_client = self.gui.tiled_client["qas/processed"]
-                display_interpolate_bin_with_tiled(
-                    tiled_client, uid, self.gui.widget_run.draw_interpolated_data
-                )
-
                 self.doc = None
             except Exception as e:
                 raise e
                 if self.soft_mode:
                     print(f"Exception: {e}")
-                    print(f">>>>>> #{attempt} Attempt to display data ({ctime()}) ")
-                    sleep(3)
+                    print(
+                        f">>>>>> #{attempt} Attempt to process data ({time.ctime()}) "
+                    )
+                    time.sleep(3)
                 else:
                     raise e
             if attempt == 5:
