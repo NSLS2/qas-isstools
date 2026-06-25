@@ -164,6 +164,10 @@ class UIXSXManager(*uic.loadUiType(ui_path)):
         signal_ch = getattr(self.xsx, f'channel{indx_ch:02}')
         signal_roi = getattr(signal_ch, f'mcaroi{indx_roi:02}')
         getattr(signal_roi, indx_lo_hi).put(value)
+        if indx_lo_hi == 'min_x':
+            self.roi_values[indx_ch-1, indx_roi-1, 0] = value
+        else:
+            self.roi_values[indx_ch-1, indx_roi-1, 1] = value
 
     def get_roi_signal(self, indx_ch, indx_roi, indx_lo_hi):
         signal_ch = getattr(self.xsx, f'channel{indx_ch:02}')
@@ -236,11 +240,14 @@ class UIXSXManager(*uic.loadUiType(ui_path)):
                 show_roi = getattr(self, 'checkBox_roi{}_show'.format(indx_roi)).isChecked()
                 for indx_hi_lo in range(2):
                     if show_ch and show_roi:
-                        #print('plotting')
                         color = self.colors[i]
                         value = self.roi_values[indx_ch-1,indx_roi-1,indx_hi_lo]
+                        if indx_hi_lo == 0:
+                            buffer = value
+                        else:
+                            value = value + buffer
                         h = self.figure_xs3_mca.ax.plot([value, value], [0, ylims[1] * 0.85], color, linestyle='dashed',
-                                                        linewidth=0.5)
+                                                    linewidth=0.5)
                         self.roi_plots.append(h)
                         # self.roi_plots.append(h)
 
@@ -277,7 +284,8 @@ class UIXSXManager(*uic.loadUiType(ui_path)):
             for i, indx in enumerate(self.num_channels):
                 if getattr(self, f"checkBox_ch{indx}_show").isChecked():
                     mca = getattr(self.xsx, f"channel{indx:02}").mca.array_data.get()
-                    energy = np.array(list(range(len(mca))))*10
+                    # energy = np.array(list(range(len(mca))))*10
+                    energy = np.array(list(range(len(mca))))
                     self.figure_xs3_mca.ax.plot(energy,mca,self.colors[i], label = 'Channel {}'.format(indx))
                     self.figure_xs3_mca.ax.legend(loc=1)
         self.update_roi_plot()
