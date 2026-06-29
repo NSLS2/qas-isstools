@@ -30,6 +30,7 @@ from isstools.elements.batch_motion import SamplePositioner
 from isstools.process_callbacks.callback import ProcessingCallback
 from xas.process import process_interpolate_locally
 import time
+from time import sleep
 
 ui_path = pkg_resources.resource_filename("isstools", "ui/XLive.ui")
 
@@ -357,6 +358,7 @@ class XliveGui(*uic.loadUiType(ui_path)):
             draw_func_interp=self.widget_run.draw_interpolated_data,
             draw_func_binned=self.widget_processing.new_bin_df_arrived,
             thread=self.processing_thread,
+            tiled_client=self.tiled_client
         )
 
         # pc = ProcessingCallback(db=self.db,
@@ -438,13 +440,19 @@ class ProcessingThread(QThread):
         while self.doc:
             try:
                 attempt += 1
-                uid = self.doc["run_start"]
-                print(f" File received {uid} : Process data to diplay locally")
-                process_interpolate_locally(
-                    self.gui.tiled_client[f"qas/migration/{uid}"],
-                    draw_func_interp=self.gui.widget_run.draw_interpolated_data,
-                )
-                self.doc = None
+                # uid = self.doc["run_start"]
+                # print(f" File received {uid} : Process data to diplay locally")
+                # run = self.gui.tiled_client[f"qas/migration/{uid}"]
+                # print("Validating")
+                # breakpoint()
+                # print(run.validate())
+                # sleep(5)
+                
+                # process_interpolate_locally(
+                #     run,
+                #     draw_func_interp=self.gui.widget_run.draw_interpolated_data,
+                # )
+                # self.doc = None
             except Exception as e:
                 raise e
                 if self.soft_mode:
