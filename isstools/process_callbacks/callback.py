@@ -21,19 +21,18 @@ class ProcessingCallback(CallbackBase):
             self.thread.start()
         else:
             print('Scan Failed')
-        print('>>>>>> stopped')
         uid = doc['run_start']
         # client = from_uri("https://tiled.nsls2.bnl.gov", remember_me=False, username=None)[f"qas/migration/{uid}"]
         run = self.tiled_client[f"qas/migration/{uid}"]
-        print("is Run using bluesky?")
+        print("Run using which bluesky_tiled_plugins?")
         print(run)
-        sleep(2)
+        sleep(3)
         print("refresh catalog")
         run.refresh()
         print("Validate")
-        sleep(2)
-        run.validate()
-        sleep(2)
+        sleep(3)
+        print(run.validate(raise_on_error=True))
+        sleep(3)
         process_interpolate_locally(
             run,
             draw_func_interp=self.draw_func_interp,
@@ -60,7 +59,7 @@ class ProcessingCallback_old(CallbackBase):
         run.refresh()
         print("Validate")
         sleep(5)
-        run.validate()
+        print(run.validate())
         process_interpolate_locally(
             run,
             draw_func_interp=self.draw_func_interp,
