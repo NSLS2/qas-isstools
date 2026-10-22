@@ -1,2 +1,3 @@
 numexpr
+bluesky-tiled-plugins>=2.0.10
 # pysmbc

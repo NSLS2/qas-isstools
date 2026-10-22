@@ -7,6 +7,14 @@ from types import ModuleType
 from unittest.mock import Mock
 
 import pytest
+from tiled.utils import OneShotCachedMap
+
+
+def make_client(runs):
+    client = Mock()
+    client.structure_clients = OneShotCachedMap({})
+    client.new_variation.return_value = runs
+    return client
 
 
 @pytest.fixture
@@ -18,7 +26,24 @@ def callbacks(monkeypatch):
     xas.process = ModuleType("xas.process")
     xas.process.process_interpolate_locally = Mock()
     xas.process.wait_for_tiled_run = Mock()
-    for module in (bluesky, bluesky.callbacks, xas, xas.process):
+    plugin = ModuleType("bluesky_tiled_plugins")
+    plugin.clients = ModuleType("bluesky_tiled_plugins.clients")
+    run_module = ModuleType("bluesky_tiled_plugins.clients.bluesky_run")
+    stream_module = ModuleType("bluesky_tiled_plugins.clients.bluesky_event_stream")
+
+    class PluginRun:
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+
+        def validate(self, **kwargs):
+            return True
+
+    run_module.BlueskyRun = PluginRun
+    stream_module.BlueskyEventStream = type("PluginStream", (), {})
+    for module in (
+        bluesky, bluesky.callbacks, xas, xas.process,
+        plugin, plugin.clients, run_module, stream_module,
+    ):
         monkeypatch.setitem(sys.modules, module.__name__, module)
 
     path = (
@@ -41,7 +66,7 @@ def callback_case(callbacks, request):
     kwargs = {"thread": thread} if is_current else {}
     callback = getattr(callbacks, request.param)(
         db=Mock(), draw_func_interp=draw, draw_func_binned=Mock(),
-        tiled_client={key: pending_run}, **kwargs
+        tiled_client=make_client({key: pending_run}), **kwargs
     )
     return callback, pending_run, draw
 
@@ -91,7 +116,7 @@ def test_current_callback_preserves_thread_handoff(callbacks):
     thread = Mock()
     callback = callbacks.ProcessingCallback(
         Mock(), Mock(), Mock(), thread,
-        tiled_client={"qas/migration/scan-uid": Mock()},
+        tiled_client=make_client({"qas/migration/scan-uid": Mock()}),
     )
     doc = {"run_start": "scan-uid", "exit_status": "success"}
 
@@ -107,7 +132,7 @@ def test_validation_failure_prevents_processing(callbacks):
     callbacks.wait_for_tiled_run.return_value = completed_run
     callback = callbacks.ProcessingCallback(
         Mock(), Mock(), Mock(), Mock(),
-        tiled_client={"qas/migration/scan-uid": Mock()},
+        tiled_client=make_client({"qas/migration/scan-uid": Mock()}),
     )
 
     with pytest.raises(ValueError, match="invalid scan"):
@@ -115,3 +140,34 @@ def test_validation_failure_prevents_processing(callbacks):
 
     completed_run.validate.assert_called_once_with(raise_on_error=True)
     callbacks.process_interpolate_locally.assert_not_called()
+
+
+def test_plugin_dispatch_overrides_legacy_clients_without_mutating_profile(callbacks):
+    from tiled.client.utils import client_for_item
+
+    legacy_run = type("LegacyRun", (), {})
+    legacy_stream = type("LegacyStream", (), {})
+    client = Mock()
+    context = object()
+    client.structure_clients = OneShotCachedMap({
+        "BlueskyRun": lambda: legacy_run,
+        "BlueskyEventStream": lambda: legacy_stream,
+        "array": lambda: list,
+    })
+
+    callbacks._processing_client(client)
+
+    dispatch = client.new_variation.call_args.kwargs["structure_clients"]
+    # Exercise Tiled's actual spec dispatch, also used when the websocket helper
+    # reconstructs a client with from_context(structure_clients=...).
+    run = client_for_item(context, dispatch, {
+        "attributes": {"specs": [{"name": "BlueskyRun", "version": "3.0"}]},
+    })
+    assert isinstance(run, callbacks.BlueskyRun)
+    assert run.validate()
+    assert run.context is context
+    assert run.structure_clients is dispatch
+    assert dispatch["BlueskyEventStream"] is callbacks.BlueskyEventStream
+    assert dispatch["array"] is list
+    assert client.structure_clients["BlueskyRun"] is legacy_run
+    assert client.structure_clients["BlueskyEventStream"] is legacy_stream
