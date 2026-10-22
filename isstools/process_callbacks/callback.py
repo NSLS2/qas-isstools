@@ -1,6 +1,5 @@
 from bluesky.callbacks import CallbackBase
-from xas.process import process_interpolate_locally
-from time import sleep
+from xas.process import process_interpolate_locally, wait_for_tiled_run
 
 
 
@@ -22,17 +21,11 @@ class ProcessingCallback(CallbackBase):
         else:
             print('Scan Failed')
         uid = doc['run_start']
-        # client = from_uri("https://tiled.nsls2.bnl.gov", remember_me=False, username=None)[f"qas/migration/{uid}"]
-        run = self.tiled_client[f"qas/migration/{uid}"]
-        print("Run using which bluesky_tiled_plugins?")
-        print(run)
-        sleep(3)
-        print("refresh catalog")
-        run.refresh()
+        # RunEngine Stop can arrive before the buffered TiledWriter finishes.
+        # Wait for persisted Stop via WebSocket before validating the scan.
+        run = wait_for_tiled_run(self.tiled_client[f"qas/migration/{uid}"])
         print("Validate")
-        sleep(3)
         print(run.validate(raise_on_error=True))
-        sleep(3)
         process_interpolate_locally(
             run,
             draw_func_interp=self.draw_func_interp,
@@ -51,14 +44,8 @@ class ProcessingCallback_old(CallbackBase):
         print('Processing Callback Old')
         print('>>>>>> stopped')
         uid = doc['run_start']
-        # client = from_uri("https://tiled.nsls2.bnl.gov", remember_me=False, username=None)[f"qas/migration/{uid}"]
-        # process_interpolate_bin_with_tiled(self.tiled_client[uid], draw_func_interp=self.draw_func_interp)
-        run = self.tiled_client[uid]
-        sleep(5)
-        print("refresh catalog")
-        run.refresh()
+        run = wait_for_tiled_run(self.tiled_client[uid])
         print("Validate")
-        sleep(5)
         print(run.validate())
         process_interpolate_locally(
             run,
@@ -76,6 +63,5 @@ class PilatusCallback(CallbackBase):
         path = '/nsls2/data/qas-new/legacy/processed/{year}/{cycle}/{PROPOSAL}XRD'.format(**doc)
         file_prefix = '{start[sample_name]}-{start[exposure_time]:.1f}s-{start[scan_id]}-'.format(**doc)
         
-
 
 
